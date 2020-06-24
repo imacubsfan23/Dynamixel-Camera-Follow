@@ -31,7 +31,8 @@ all_servos = [Servo(1,'XL430',0,4000),Servo(2,'XL430',1000,3000)]
 def start_sequence():
     for servo in all_servos:
         dxl.enable_torque(servo.id)
-        dxl.set_home(servo.id, servo.type)
+    dxl.set_home(1, 'XL430')
+    dxl.set_home(2, 'XL430')
 
 #needs to close port every time program runs
 def end_sequence():

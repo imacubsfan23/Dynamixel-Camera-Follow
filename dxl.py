@@ -56,6 +56,10 @@ ADDR_TORQUE_ENABLE      = 64                    # Control table address is diffe
 ADDR_GOAL_POSITION      = 116
 ADDR_PRESENT_POSITION   = 132
 
+# Data Byte Length
+LEN_GOAL_POSITION       = 4
+LEN_PRESENT_POSITION    = 4
+
 # Protocol version
 PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
 
@@ -79,6 +83,12 @@ portHandler = PortHandler(DEVICENAME)
 # Set the protocol version
 # Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
 packetHandler = PacketHandler(PROTOCOL_VERSION)
+
+# Initialize GroupBulkWrite instance
+groupBulkWrite = GroupBulkWrite(portHandler, packetHandler)
+
+# Initialize GroupBulkRead instace for Present Position
+groupBulkRead = GroupBulkRead(portHandler, packetHandler)
 
 # Open port
 if portHandler.openPort():
@@ -128,7 +138,7 @@ def get_present_position(dxl_id):
 
 #Set Position of Servo
 def set_position(dxl_id, dxl_goal_position):
-    while(abs(dxl_goal_position - get_present_position(dxl_id)) > 10):
+    while(abs(dxl_goal_position - get_present_position(dxl_id)) > 5):
         dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, dxl_id, ADDR_GOAL_POSITION, dxl_goal_position)
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % packetHandler.getTxRxResult(dxl_comm_result))

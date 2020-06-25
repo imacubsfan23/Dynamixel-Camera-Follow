@@ -126,7 +126,36 @@ def disable_torque(dxl_id):
     elif dxl_error != 0:
         print("%s" % packetHandler.getRxPacketError(dxl_error))
 
-#Get goal of Servo
+def add_param_read(dxl_id, param, param_byte_size = 4):#param_byte_size would be different for a function such as LED on where it is either 0 or 1
+    dxl_addparam_result = groupBulkRead.addParam(dxl_id, param, param_byte_size)
+    if dxl_addparam_result != True:
+        print("[ID:%03d] groupBulkRead addparam failed" % dxl_id)
+        quit()
+
+def add_param_write(dxl_id, data, param, param_byte_size = 4):#param_byte_size would be different for a function such as LED on where it is either 0 or 1
+    data_byte_array = [ DXL_LOBYTE(DXL_LOWORD(data)),
+                        DXL_HIBYTE(DXL_LOWORD(data)),
+                        DXL_LOBYTE(DXL_HIWORD(data)),
+                        DXL_HIBYTE(DXL_HIWORD(data))]
+    dxl_addparam_result = groupBulkWrite.addParam(dxl_id, param, param_byte_size, data_byte_array)
+    if dxl_addparam_result != True:
+        print("[ID:%03d] groupBulkWrite addparam failed" % dxl_id)
+        quit()
+
+def group_read():
+    dxl_comm_result = groupBulkRead.txRxPacket()
+    if dxl_comm_result != COMM_SUCCESS:
+        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+
+def get_goal_position(dxl_id):
+    dxl_goal_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, dxl_id, ADDR_GOAL_POSITION)
+    if dxl_comm_result != COMM_SUCCESS:
+        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+    elif dxl_error != 0:
+        print("%s" % packetHandler.getRxPacketError(dxl_error))
+    else:
+        return dxl_goal_position
+
 def get_present_position(dxl_id):
     dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, dxl_id, ADDR_PRESENT_POSITION)
     if dxl_comm_result != COMM_SUCCESS:
@@ -136,22 +165,44 @@ def get_present_position(dxl_id):
     else:
         return dxl_present_position
 
-#Set Position of Servo
-def set_position(dxl_id, dxl_goal_position):
-    while(abs(dxl_goal_position - get_present_position(dxl_id)) > 5):
-        dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, dxl_id, ADDR_GOAL_POSITION, dxl_goal_position)
-        if dxl_comm_result != COMM_SUCCESS:
-            print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-        elif dxl_error != 0:
-            print("%s" % packetHandler.getRxPacketError(dxl_error))
-        else:
-            print("{} == {}".format(dxl_goal_position, get_present_position(dxl_id)))
+def group_write():
+    dxl_comm_result = groupBulkWrite.txPacket()
+    if dxl_comm_result != COMM_SUCCESS:
+        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+    print("group_write")
 
-#Set Position of Servo to its home
-def set_home(dxl_id, servo_type):
+def group_write_positions(all_servos=[]):
+    for servo in all_servos:
+        print(get_goal_position(servo.id))
+        print(get_present_position(servo.id))
+        if(abs(get_goal_position(servo.id) - get_present_position(servo.id)) > 5):
+            group_write()
+            group_write_positions()
+
+def clear_params():
+    groupBulkRead.clearParam()
+    groupBulkWrite.clearParam()
+
+#Set Absolute Position of Servo
+def set_position(dxl_id, dxl_goal_position):
+    if not groupBulkRead.isAvailable(dxl_id, ADDR_GOAL_POSITION, LEN_PRESENT_POSITION):
+        add_param_write(dxl_id, dxl_goal_position, ADDR_GOAL_POSITION)
+    dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, dxl_id, ADDR_GOAL_POSITION, dxl_goal_position)
+    if dxl_comm_result != COMM_SUCCESS:
+        print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
+    elif dxl_error != 0:
+        print("%s" % packetHandler.getRxPacketError(dxl_error))
+
+#Set Relative Position of Servo
+def rotate_servo(dxl_id, dist=0):#positive dist = clockwise
+    set_position(dxl_id, get_present_position(dxl_id)-dist)
+    print("{}: {}".format(dxl_id, get_present_position(dxl_id)))
+
+#Set Absolute Position of Servo to its home
+def set_home(dxl_id, servo_type='XL430'):
     if(servo_type == 'XL430'):
         set_position(dxl_id, 2000);#true home for XL430-W250-T
 
-# Close port
+#close port
 def close_port():
     portHandler.closePort()

@@ -26,17 +26,21 @@ class Servo:
         self.range_min = range_min
         self.range_max = range_max
 
-all_servos = [Servo(1,'XL430',0,4000),Servo(2,'XL430',1000,3000)]
+servo_1 = Servo(1,'XL430',0,4000)
+servo_2 = Servo(2,'XL430',1000,3000)
+all_servos = [servo_1,servo_2]
 
 def start_sequence():
+    dxl.clear_params()
     for servo in all_servos:
         dxl.enable_torque(servo.id)
-    dxl.set_home(1, 'XL430')
-    dxl.set_home(2, 'XL430')
+        dxl.set_home(servo.id)
+    dxl.group_write_positions(all_servos)
 
 #needs to close port every time program runs
 def end_sequence():
     #if using an arm, needs a set_rest function
+    dxl.clear_params()
     for servo in all_servos:
         dxl.disable_torque(servo.id)
     dxl.close_port()

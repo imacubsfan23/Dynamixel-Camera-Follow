@@ -77,8 +77,9 @@ DXL_MOVING_STATUS_THRESHOLD = 20                # Dynamixel moving status thresh
 # Initialize PortHandler instance
 # Set the port path
 # Get methods and members of PortHandlerLinux or PortHandlerWindows
+print("Enter your com port as an int: ")
+DEVICE_NAME = 'COM{}'.format(input())
 portHandler = PortHandler(DEVICENAME)
-
 # Initialize PacketHandler instance
 # Set the protocol version
 # Get methods and members of Protocol1PacketHandler or Protocol2PacketHandler
@@ -94,10 +95,14 @@ groupBulkRead = GroupBulkRead(portHandler, packetHandler)
 if portHandler.openPort():
     print("Succeeded to open the port")
 else:
-    print("Failed to open the port")
-    print("Press any key to terminate...")
-    getch()
-    quit()
+
+    if portHandler.openPort():
+        print("Succeeded to open the port")
+    else:
+        print("Failed to open the port")
+        print("Press any key to terminate...")
+        getch()
+        quit()
 
 # Set port baudrate
 if portHandler.setBaudRate(BAUDRATE):

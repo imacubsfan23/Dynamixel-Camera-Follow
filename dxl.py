@@ -127,20 +127,20 @@ def disable_torque(dxl_id):
         print("%s" % packetHandler.getRxPacketError(dxl_error))
 
 def add_param_read(dxl_id, param, param_byte_size = 4):#param_byte_size would be different for a function such as LED on where it is either 0 or 1
-    dxl_addparam_result = groupBulkRead.addParam(dxl_id, param, param_byte_size)
-    if dxl_addparam_result != True:
-        print("[ID:%03d] groupBulkRead addparam failed" % dxl_id)
-        quit()
+    if not groupBulkRead.isAvailable(dxl_id, param, param_byte_size):
+        dxl_addparam_result = groupBulkRead.addParam(dxl_id, param, param_byte_size)
+        if dxl_addparam_result != True:
+            print("[ID:%03d] groupBulkRead addparam failed" % dxl_id)
+            quit()
 
 def add_param_write(dxl_id, data, param, param_byte_size = 4):#param_byte_size would be different for a function such as LED on where it is either 0 or 1
     data_byte_array = [ DXL_LOBYTE(DXL_LOWORD(data)),
                         DXL_HIBYTE(DXL_LOWORD(data)),
                         DXL_LOBYTE(DXL_HIWORD(data)),
                         DXL_HIBYTE(DXL_HIWORD(data))]
-    dxl_addparam_result = groupBulkWrite.addParam(dxl_id, param, param_byte_size, data_byte_array)
-    if dxl_addparam_result != True:
-        print("[ID:%03d] groupBulkWrite addparam failed" % dxl_id)
-        quit()
+    write = groupBulkWrite.addParam(dxl_id, param, param_byte_size, data_byte_array)
+    if write != True:
+        groupBulkWrite.changeParam(dxl_id, param, param_byte_size, data_byte_array)
 
 def group_read():
     dxl_comm_result = groupBulkRead.txRxPacket()
@@ -169,15 +169,18 @@ def group_write():
     dxl_comm_result = groupBulkWrite.txPacket()
     if dxl_comm_result != COMM_SUCCESS:
         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
-    print("group_write")
 
 def group_write_positions(all_servos=[]):
     for servo in all_servos:
-        print(get_goal_position(servo.id))
-        print(get_present_position(servo.id))
         if(abs(get_goal_position(servo.id) - get_present_position(servo.id)) > 5):
             group_write()
             group_write_positions()
+
+def group_write_positions_from_id(servo_ids=[]):
+    for id in servo_ids:
+        if(abs(get_goal_position(id) - get_present_position(id)) > 5):
+            group_write()
+            group_write_positions_from_id()
 
 def clear_params():
     groupBulkRead.clearParam()
@@ -185,8 +188,7 @@ def clear_params():
 
 #Set Absolute Position of Servo
 def set_position(dxl_id, dxl_goal_position):
-    if not groupBulkRead.isAvailable(dxl_id, ADDR_GOAL_POSITION, LEN_PRESENT_POSITION):
-        add_param_write(dxl_id, dxl_goal_position, ADDR_GOAL_POSITION)
+    add_param_write(dxl_id, dxl_goal_position, ADDR_GOAL_POSITION)
     dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, dxl_id, ADDR_GOAL_POSITION, dxl_goal_position)
     if dxl_comm_result != COMM_SUCCESS:
         print("%s" % packetHandler.getTxRxResult(dxl_comm_result))
@@ -196,7 +198,21 @@ def set_position(dxl_id, dxl_goal_position):
 #Set Relative Position of Servo
 def rotate_servo(dxl_id, dist=0):#positive dist = clockwise
     set_position(dxl_id, get_present_position(dxl_id)-dist)
-    print("{}: {}".format(dxl_id, get_present_position(dxl_id)))
+    #print("{}: {}".format(dxl_id, get_present_position(dxl_id)))
+
+#Start Specific XL430 Turret Code
+def tilt_horizontal(dist=0):
+    rotate_servo(1, dist)
+
+def tilt_vertical(dist=0):
+    rotate_servo(2, dist)
+
+def set_coordinates(x,y,horizontal_servo=1, vertical_servo=2):
+    print("{}, {}".format(get_present_position(horizontal_servo)+x, get_present_position(vertical_servo)+y))
+    set_position(horizontal_servo, get_present_position(horizontal_servo) - x)
+    set_position(vertical_servo, get_present_position(vertical_servo) + y)
+    time.sleep(0.05)
+    group_write_positions_from_id([horizontal_servo, vertical_servo])
 
 #Set Absolute Position of Servo to its home
 def set_home(dxl_id, servo_type='XL430'):

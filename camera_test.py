@@ -1,10 +1,25 @@
-import pyautogui
 import handy
 import cv2
+import dxl
 
-res = pyautogui.size()
+#specific to XL430 Turret
+class Servo:
+    def __init__(self, id, servo_type, range_min=0, range_max=4000):
+        self.id = id
+        self.type = servo_type
+        self.range_min = range_min
+        self.range_max = range_max
+
+servo_1 = Servo(1,'XL430',0,4000)
+servo_2 = Servo(2,'XL430',1000,3000)
+all_servos = [servo_1,servo_2]
+
+for servo in all_servos:
+    dxl.enable_torque(servo.id)
+    dxl.set_home(servo.id)
+dxl.group_write_positions(all_servos)
+
 camera_res = (720,480)#480p so response time of hand movement is faster
-
 # capture the hand histogram by placing your hand in the box shown and
 # press 'A' to confirm
 # source is set to inbuilt webcam by default. Pass source=1 to use an
@@ -18,6 +33,8 @@ while True:
     k = cv2.waitKey(1)
     # Press 'esc' to exit
     if k%256 == 27:
+        for servo in all_servos:
+            dxl.disable_torque(servo.id)
         break
 
     ret, frame = cap.read()
@@ -52,16 +69,11 @@ while True:
     com = hand.get_center_of_mass()
     if com:
         cv2.circle(quick_outline, com, 10, (255, 0, 0), -1)
+        target = (camera_res[0]/2 - com[0], camera_res[1]/2 - com[1])
+        dxl.set_coordinates(int(target[0]),int(target[1]))
 
     #shows camera
     cv2.imshow("Handy", quick_outline)
 
-    mouse_pos = (camera_res[0]/2, camera_res[1]/2)
-    try:
-        #mapping camera position to screen position
-        mouse_pos = (com[0] * (res[0]/camera_res[0]),com[1] * (res[1]/camera_res[1]))
-        pyautogui.moveTo(mouse_pos, duration = 0)
-    except:
-        pass
 cap.release()
 cv2.destroyAllWindows()

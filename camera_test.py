@@ -19,7 +19,7 @@ for servo in all_servos:
     dxl.set_home(servo.id)
 dxl.group_write_positions(all_servos)
 
-camera_res = (720,480)#480p so response time of hand movement is faster
+camera_res = (400,400)#response time of hand movement is faster when res smaller
 # capture the hand histogram by placing your hand in the box shown and
 # press 'A' to confirm
 # source is set to inbuilt webcam by default. Pass source=1 to use an

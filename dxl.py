@@ -178,7 +178,7 @@ def group_write_positions(all_servos=[]):
 
 def group_write_positions_from_id(servo_ids=[]):
     for id in servo_ids:
-        if(abs(get_goal_position(id) - get_present_position(id)) > 5):
+        if(abs(get_goal_position(id) - get_present_position(id)) > 50):
             group_write()
             group_write_positions_from_id()
 
@@ -208,10 +208,10 @@ def tilt_vertical(dist=0):
     rotate_servo(2, dist)
 
 def set_coordinates(x,y,horizontal_servo=1, vertical_servo=2):
-    print("{}, {}".format(get_present_position(horizontal_servo)+x, get_present_position(vertical_servo)+y))
+    #print("{}, {}".format(get_present_position(horizontal_servo)+x, get_present_position(vertical_servo)+y))
     set_position(horizontal_servo, get_present_position(horizontal_servo) - x)
     set_position(vertical_servo, get_present_position(vertical_servo) + y)
-    time.sleep(0.05)
+    time.sleep(0.02)
     group_write_positions_from_id([horizontal_servo, vertical_servo])
 
 #Set Absolute Position of Servo to its home

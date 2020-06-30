@@ -30,7 +30,7 @@
 # Be sure that Dynamixel PRO properties are already set as %% ID : 1 / Baudnum : 1 (Baudrate : 57600)
 #
 
-import os
+import os, serial, serial.tools.list_ports
 from dynamixel_sdk import *                     # Uses Local Dynamixel SDK library for python.
                                                 #If installed into site_packages, delete dynamixel_sdk folder
 
@@ -44,7 +44,7 @@ LEN_GOAL_POSITION       = 4
 LEN_PRESENT_POSITION    = 4
 
 # Protocol version
-PROTOCOL_VERSION            = 2.0               # See which protocol version is used in the Dynamixel
+PROTOCOL_VERSION            = 2.0              # See which protocol version is used in the Dynamixel
 
 # Default setting
 BAUDRATE                    = 1000000           # Dynamixel default baudrate : 57600
@@ -55,8 +55,9 @@ if os.name == 'nt':
     import msvcrt
     def getch():
         return msvcrt.getch().decode()
-    print("Enter your com port as an int")
-    DEVICENAME = 'COM{}'.format(input())
+    for p in serial.tools.list_ports.comports():
+        if 'USB Serial Port' in p.description:
+            DEVICENAME = p.device
 else:
     import sys, tty, termios
     fd = sys.stdin.fileno()
@@ -207,10 +208,10 @@ def tilt_vertical(dist=0):
     rotate_servo(2, dist)
 
 def set_coordinates(x,y,horizontal_servo=1, vertical_servo=2):
+    speed_multiplier = 0.75
     #print("{}, {}".format(get_present_position(horizontal_servo)+x, get_present_position(vertical_servo)+y))
-    set_position(horizontal_servo, get_present_position(horizontal_servo) - x)
-    set_position(vertical_servo, get_present_position(vertical_servo) + y)
-    time.sleep(0.02)
+    set_position(horizontal_servo, get_present_position(horizontal_servo) - int(x*speed_multiplier))
+    set_position(vertical_servo, get_present_position(vertical_servo) + int(y*speed_multiplier))
     group_write_positions_from_id([horizontal_servo, vertical_servo])
 
 #Set Absolute Position of Servo to its home

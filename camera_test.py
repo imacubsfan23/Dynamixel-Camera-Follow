@@ -54,21 +54,15 @@ while True:
 
     # to get the outline of the hand
     # min area of the hand to be detected = 10000 by default
-    custom_outline = hand.draw_outline(
-        min_area=1000, color=(0, 255, 255), thickness=2)
+    # custom_outline = hand.draw_outline(min_area=1000, color=(0, 255, 255), thickness=2)
 
     # to get a quick outline of the hand
     quick_outline = hand.outline
 
-    # draw fingertips on the outline of the hand, with radius 5 and color red,
-    # filled in.
-    #for fingertip in hand.fingertips:
-    #    cv2.circle(quick_outline, fingertip, 5, (0, 0, 255), -1)
-
     # to get the centre of mass of the hand
     com = hand.get_center_of_mass()
     if com:
-        #cv2.circle(quick_outline, com, 10, (255, 0, 0), -1)
+        cv2.circle(quick_outline, com, 10, (255, 0, 0), -1)
         target = (camera_res[0]/2 - com[0], camera_res[1]/2 - com[1])
         dxl.set_coordinates(int(target[0]),int(target[1]))
 

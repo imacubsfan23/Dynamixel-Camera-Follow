@@ -68,7 +68,7 @@ while True:
     # to get the centre of mass of the hand
     com = hand.get_center_of_mass()
     if com:
-        cv2.circle(quick_outline, com, 10, (255, 0, 0), -1)
+        #cv2.circle(quick_outline, com, 10, (255, 0, 0), -1)
         target = (camera_res[0]/2 - com[0], camera_res[1]/2 - com[1])
         dxl.set_coordinates(int(target[0]),int(target[1]))
 

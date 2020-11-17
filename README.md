@@ -9,4 +9,4 @@ Current Uses:
   
 Current weaknesses:
   * Only tested with XL430-W250-T servos and U2D2 
-  * Non-Asynchronous Servo Movement
+  * ~~Non-Asynchronous Servo Movement~~
